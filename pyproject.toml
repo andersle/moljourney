@@ -18,6 +18,7 @@ matplotlib = "^3.7.1"
 seaborn = "^0.12.2"
 tqdm = "^4.65.0"
 requests = "^2.28.2"
+mordred = "^1.2.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.0.259"
@@ -43,7 +44,7 @@ warn_unused_ignores = true
 show_error_codes = true
 
 [[tool.mypy.overrides]]
-module = ["pandas.*", "sklearn.*", "rdkit.*"]
+module = ["pandas.*", "sklearn.*", "rdkit.*", "mordred.*"]
 ignore_missing_imports = true
 
 
