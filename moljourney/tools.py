@@ -7,7 +7,7 @@ import requests
 LOGGER = logging.getLogger(__name__)
 
 
-USER_AGENT = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:102.0) Gecko/20100101 Firefox/102.0"
+USER_AGENT = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:102.0) Gecko/20100101 Firefox/102.0"  # noqa: E501
 
 
 def download_file(url: str, output_file: str) -> str | None:
