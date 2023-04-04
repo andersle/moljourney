@@ -15,6 +15,7 @@ from rdkit.Chem.rdFingerprintGenerator import (
     GetRDKitFPGenerator,
     GetTopologicalTorsionGenerator,
 )
+from tqdm.contrib import itertools
 from tqdm.contrib.concurrent import process_map
 
 LOGGER = logging.getLogger(__name__)
@@ -106,6 +107,8 @@ def get_fingerprints(
     disable_progress: bool = False,
     max_workers: int | None = None,
     chunksize: int = 1,
+    description: str = "Fingerprint",
+    leave: bool = True,
 ):
     """Calculate fingerprints for molecules.
 
@@ -125,6 +128,10 @@ def get_fingerprints(
         If None, use as many as processors.
     chunksize : int, optional
         Size of chunks for workers.
+    description : str, optional
+        Add description to the progress bar.
+    leave : bool, optional
+        Can be set to False to clean up for nested bars.
 
     Returns
     -------
@@ -168,7 +175,46 @@ def get_fingerprints(
         max_workers=max_workers,
         disable=disable_progress,
         chunksize=chunksize,
+        desc=description,
+        leave=leave,
     )
     matrix = np.array(values, dtype=int)
     bit = [f"bit_{i+1}" for i in range(matrix.shape[1])]
     return pd.DataFrame(matrix, columns=bit)
+
+
+def get_fingerprints_selection(
+    molecules: list[type[Mol]], bits: None | list[int] = None
+) -> dict[str, pd.DataFrame]:
+    """Calculate a selection of fingerprints."""
+    methods_bits = [
+        "rdkit",
+        "rdkit-count",
+        "morgan2",
+        "morgan2-count",
+        "morgan3",
+        "morgan3-count",
+        "topologicaltorsion",
+        "topologicaltorsion-count",
+        "atompair",
+        "atompair-count",
+        "avalon",
+    ]
+    if bits is None:
+        bits = [512, 1024, 2048, 4096]
+
+    methods_no_bits = ["erg", "maccs", "estate"]
+
+    data_sets = {}
+
+    for method, bit in itertools.product(methods_bits, bits, desc="Bit sets"):
+        key = f"{method}-{bit}"
+        data_sets[key] = get_fingerprints(
+            molecules, method, bits=bit, description=key, leave=False
+        )
+
+    for method in methods_no_bits:
+        data_sets[method] = get_fingerprints(
+            molecules, method, description=method, leave=True
+        )
+    return data_sets
