@@ -24,12 +24,13 @@ def calculate_mordred_descriptors(
     return calculator.pandas(molecules, nproc=nproc, quiet=quiet, ipynb=ipynb)
 
 
-def calculate_rdkit_descriptors(
+def calculate_rdkit_2d_descriptors(
     molecules: list[type[Mol]],
     descriptors: list[str] | None = None,
     disable_progress: bool = False,
     max_workers: int | None = None,
     chunksize: int = 1,
+    leave: bool = True,
 ) -> pd.DataFrame:
     """Calculate RDKit 2D-descriptors for a set of molecules.
 
@@ -47,6 +48,9 @@ def calculate_rdkit_descriptors(
         If None, use as many as processors.
     chunksize : int, optional
         Size of chunks for workers.
+    leave : bool, optional
+        Used by tqdm to control if the progress bar is removed on
+        completion or not.
     """
     if descriptors is None:
         descriptors = [i[0] for i in Descriptors._descList]
@@ -59,6 +63,7 @@ def calculate_rdkit_descriptors(
         max_workers=max_workers,
         disable=disable_progress,
         chunksize=chunksize,
+        leave=leave,
     )
     return pd.DataFrame(np.array(values), columns=descriptors)
 
@@ -66,8 +71,19 @@ def calculate_rdkit_descriptors(
 def calculate_rdkit_3d_descriptors(
     molecules: list[type[Mol]],
     disable_progress: bool = False,
+    leave: bool = True,
 ) -> pd.DataFrame:
     """Calculate rdkit 3D-descriptors for a set of molecules.
+
+    Parameters
+    ----------
+    molecules : list of objects like rdkit.Chem.Mol
+        The molecules to calculate descriptors for.
+    disable_progress : boolean, optional
+        If False, then we will display a progress bar.
+    leave : bool, optional
+        Used by tqdm to control if the progress bar is removed on
+        completion or not.
 
     Note
     ----
@@ -82,7 +98,7 @@ def calculate_rdkit_3d_descriptors(
     # The functions above are all lambda functions -> they can not be pickled,
     # so we can not use process_map here...
     values = []
-    for mol in tqdm(molecules, disable=disable_progress):
+    for mol in tqdm(molecules, disable=disable_progress, leave=leave):
         values.append([func(mol) for func in functions])
     return pd.DataFrame(np.array(values), columns=descriptors)
 
@@ -99,14 +115,16 @@ def calculate_rdkit_fragments(
     disable_progress: bool = False,
     max_workers: int | None = None,
     chunksize: int = 1,
+    leave: bool = True,
 ) -> pd.DataFrame:
     """Calculate RDKit fragment descriptors."""
-    return calculate_rdkit_descriptors(
+    return calculate_rdkit_2d_descriptors(
         molecules,
         descriptors=_fragments_rdkit(),
         disable_progress=disable_progress,
         max_workers=max_workers,
         chunksize=chunksize,
+        leave=leave,
     )
 
 
@@ -114,6 +132,7 @@ def calculate_rdkit_functional_groups(
     molecules: list[type[Mol]],
     count: bool = False,
     disable_progress: bool = False,
+    leave: bool = True,
 ) -> pd.DataFrame:
     """Calculate RDKit functional groups.
 
@@ -127,6 +146,9 @@ def calculate_rdkit_functional_groups(
         if a group occurs (1) or not (0).
     disable_progress : boolean, optional
         If False, then we will display a progress bar.
+    leave : bool, optional
+        Used by tqdm to control if the progress bar is removed on
+        completion or not.
 
     Note
     ----
@@ -136,7 +158,7 @@ def calculate_rdkit_functional_groups(
     functional_groups = set([])
     all_groups = []
 
-    for mol in tqdm(molecules, disable=disable_progress):
+    for mol in tqdm(molecules, disable=disable_progress, leave=leave):
         groups = identify_functional_groups(mol)
         local = defaultdict(int)  # type: defaultdict[str, int]
         for group in groups:
@@ -154,3 +176,39 @@ def calculate_rdkit_functional_groups(
         for key in data:
             data[key].append(groups.get(key, 0))
     return pd.DataFrame(data)
+
+
+def calculate_rdkit_descriptors(
+    molecules: list[type[Mol]],
+    disable_progress: bool = False,
+    max_workers: int | None = None,
+    chunksize: int = 1,
+) -> pd.DataFrame:
+    """Calculate all RDKit descriptors for the given molecules."""
+    with tqdm(total=3, disable=disable_progress) as pbar:
+        pbar.set_description("Functional groups")
+        fgroups = calculate_rdkit_functional_groups(
+            molecules,
+            disable_progress=disable_progress,
+            count=True,
+            leave=False,
+        )
+        pbar.update(1)
+        pbar.set_description("2D descriptors")
+        desc2d = calculate_rdkit_2d_descriptors(
+            molecules,
+            disable_progress=disable_progress,
+            max_workers=max_workers,
+            chunksize=chunksize,
+            leave=False,
+        )
+        pbar.update(1)
+        pbar.set_description("3D descriptors")
+        desc3d = calculate_rdkit_3d_descriptors(
+            molecules,
+            disable_progress=disable_progress,
+            leave=False,
+        )
+        pbar.update(1)
+        pbar.set_description("Done")
+    return pd.concat([desc2d, desc3d, fgroups], axis=1)

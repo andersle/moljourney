@@ -9,6 +9,18 @@ from sklearn.impute import KNNImputer, SimpleImputer
 LOGGER = logging.getLogger(__name__)
 
 
+def count_nan(dataframe: pd.DataFrame) -> pd.DataFrame:
+    """Count the number of NaNs in the data frame."""
+    nan_count = dataframe.isnull().sum()
+    nan_count.name = "nan-count"
+    nan_fract = dataframe.isnull().mean()
+    nan_fract.name = "nan-fraction"
+    nan_data = pd.concat([nan_count, nan_fract], axis=1)
+    nan_data.index.name = "feature"
+    nan_data = nan_data.reset_index()
+    return nan_data
+
+
 def run_impute(
     dataframe: pd.DataFrame,
     imputer_str: str = "",
@@ -66,6 +78,19 @@ def remove_all_nan_columns(data: pd.DataFrame) -> pd.DataFrame:
     return data.dropna(axis=1)
 
 
+def remove_all_nan_rows(data: pd.DataFrame) -> pd.DataFrame:
+    """Remove all rows with NaNs."""
+    drop = data.dropna(axis=0)
+
+    diff = data.index.difference(drop.index)
+
+    if len(diff) > 0:
+        LOGGER.info("Removed %i sample(s) with NaNs.", len(diff))
+        removed_idx = sorted(list(diff))
+        LOGGER.debug("Columns removed: %s", removed_idx)
+    return drop
+
+
 def remove_nan_threshold(
     data: pd.DataFrame, threshold: float = 0.2
 ) -> pd.DataFrame:
@@ -80,7 +105,7 @@ def remove_nan_threshold(
             threshold,
         )
         LOGGER.debug("Column(s) removed: %s", sorted(remove))
-    return data.drop(columns=remove)
+    return data.drop(columns=list(remove))
 
 
 def preprocess_nan(
@@ -133,12 +158,14 @@ def preprocess_nan(
     # the threshold.
     if isinstance(handle_nan, str) and handle_nan == "remove":
         return remove_all_nan_columns(dataframe)
+    if isinstance(handle_nan, str) and handle_nan == "remove-samples":
+        return remove_all_nan_rows(dataframe)
     # Remove based on the fraction of NaNs:
     dataframe = remove_nan_threshold(dataframe, threshold=remove_threshold)
 
     # Check if we still have some NaNs to impute:
     nan_count = dataframe.isnull().sum()
-    columns_nan = set(nan_count[nan_count > 0].index)
+    columns_nan = list(set(nan_count[nan_count > 0].index))
 
     if len(columns_nan) == 0:
         return dataframe
@@ -188,7 +215,7 @@ def preprocess_variance(
     variance.fit(data.select_dtypes(include="number"))
     columns_after = set(list(variance.get_feature_names_out()))
 
-    remove = columns_before - columns_after
+    remove = list(columns_before - columns_after)
     if len(remove) > 0:
         LOGGER.info("Removed %i column(s) with low variance.", len(remove))
         LOGGER.debug("Column(s) removed: %s", sorted(remove))

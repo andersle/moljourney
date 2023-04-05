@@ -7,7 +7,7 @@ license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.11,<3.12"
+python = ">=3.10,<3.11"
 rdkit = "^2022.9.5"
 jupyter = "^1.0.0"
 numpy = "^1.24.2"
@@ -44,7 +44,7 @@ warn_unused_ignores = true
 show_error_codes = true
 
 [[tool.mypy.overrides]]
-module = ["pandas.*", "sklearn.*", "rdkit.*", "mordred.*"]
+module = ["pandas.*", "sklearn.*", "rdkit.*", "mordred.*", "matplotlib.*", "seaborn.*"]
 ignore_missing_imports = true
 
 
