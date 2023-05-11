@@ -117,7 +117,7 @@ def missing_fraction(
     use_feature_names: bool = True,
     rotation: str | int | None = None,
     add_bar_label: bool = True,
-) -> tuple[pd.DataFrame, plt.Figure]:
+) -> tuple[pd.DataFrame, plt.Figure | None]:
     """Show the fraction of missing numbers.
 
     Parameters
@@ -154,14 +154,13 @@ def missing_fraction(
         ascending = sort.lower() == "ascending"
         nan_data = nan_data.sort_values(by="nan-count", ascending=ascending)
 
-    select = nan_data
-    if not show_all_features:
-        select = nan_data[nan_data["nan-count"] > 0]
-
-    if len(select.index) < 1:
+    if len(nan_data[nan_data["nan-count"] > 0].index) < 1:
         LOGGER.debug("Will not plot missing bar figure - no missing data.")
         return nan_data, None
 
+    select = nan_data
+    if not show_all_features:
+        select = nan_data[nan_data["nan-count"] > 0]
 
     if ax is None:
         fig, ax = create_figure_and_axes()
