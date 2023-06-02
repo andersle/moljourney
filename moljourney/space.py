@@ -1,4 +1,4 @@
-"""Methods for dimension reduciton."""
+"""Methods for dimension reduction."""
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
