@@ -1,16 +1,21 @@
 import numpy as np
 import pandas as pd
+import pytest
+from bokeh.models.mappers import (
+    CategoricalColorMapper,
+    CategoricalMarkerMapper,
+    LinearColorMapper,
+)
+from bokeh.plotting import figure
+
 from moljourney.plotting.bokehplotting import (
-    get_size_mapping,
     find_bokeh_palettes,
     get_bokeh_palette,
     get_color_mapping,
     get_marker_mapping,
+    get_size_mapping,
     scatterplot,
 )
-from bokeh.models.mappers import LinearColorMapper, CategoricalColorMapper, CategoricalMarkerMapper
-from bokeh.plotting import figure
-import pytest
 
 
 def test_get_size_mapping():
@@ -42,7 +47,13 @@ def test_get_size_mapping():
 
     # Test that we understand letters, but we have too many categories
     test = ["a", "b", "c", "a", "d"]
-    sizes = get_size_mapping(test, set_sizes=[0, 3,])
+    sizes = get_size_mapping(
+        test,
+        set_sizes=[
+            0,
+            3,
+        ],
+    )
     assert set(sizes) == {0.0, 1.0, 2.0, 3.0}
 
     # print(test)
@@ -97,6 +108,7 @@ def test_get_bokeh_palette():
     with pytest.raises(ValueError):
         palette = get_bokeh_palette(257)
 
+
 def test_get_color_mapping():
     values = [1, 2, 3, 4, 1, 2, 3, 4]
     mapping = get_color_mapping(values)
@@ -113,6 +125,7 @@ def test_get_color_mapping():
     values = ["a", "a", "b", "c", "d"]
     with pytest.raises(ValueError):
         mapping = get_color_mapping(values, max_categories=2)
+
 
 def test_marker_mapping():
     values = ["a", "b", "z", "a"]
@@ -142,8 +155,7 @@ def test_scatter_plot():
     assert isinstance(fig, figure)
     # Test that we can give a DataFrame:
     data = pd.DataFrame(
-        np.random.normal(size=(10, 5)),
-        columns=["a", "b", "c", "d", "e"]
+        np.random.normal(size=(10, 5)), columns=["a", "b", "c", "d", "e"]
     )
     fig = scatterplot(data=data, x="a")
     assert isinstance(fig, figure)
@@ -168,27 +180,11 @@ def test_scatter_plot():
     with pytest.raises(KeyError):
         scatterplot(data=data, x="a", marker="missing!")
     # Setting the marker:
-    data["m"] = ["a", "b",] * 5
+    data["m"] = [
+        "a",
+        "b",
+    ] * 5
     fig = scatterplot(data=data, x="a", y="b", marker="m")
     assert isinstance(fig, figure)
-    fig = scatterplot(data=data, x="a", y="b", marker=["frog", "cat"]*5)
+    fig = scatterplot(data=data, x="a", y="b", marker=["frog", "cat"] * 5)
     assert isinstance(fig, figure)
-
-if __name__ == "__main__":
-    #test_get_size_mapping()
-    #test_find_bokeh_palettes()
-    #test_get_bokeh_palette()
-    #test_get_color_mapping()
-    #test_marker_mapping()
-    test_scatter_plot()
-    # Setting the marker:
-    data["m"] = ["a", "b",] * 5
-    fig = scatterplot(data=data, x="a", y="b", marker="m")
-
-if __name__ == "__main__":
-    #test_get_size_mapping()
-    #test_find_bokeh_palettes()
-    #test_get_bokeh_palette()
-    #test_get_color_mapping()
-    #test_marker_mapping()
-    test_scatter_plot()
