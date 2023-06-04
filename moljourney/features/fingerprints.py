@@ -20,6 +20,20 @@ from tqdm.contrib.concurrent import process_map
 
 LOGGER = logging.getLogger(__name__)
 
+METHODS_BITS = [
+        "rdkit",
+        "rdkit-count",
+        "morgan2",
+        "morgan2-count",
+        "morgan3",
+        "morgan3-count",
+        "topologicaltorsion",
+        "topologicaltorsion-count",
+        "atompair",
+        "atompair-count",
+        "avalon",
+]
+METHODS_NO_BITS = ["erg", "maccs", "estate"]
 # Note: The methods below are mainly here so we can make use
 # of process_map without too much hassle.
 
@@ -109,7 +123,7 @@ def get_fingerprints(
     chunksize: int = 1,
     description: str = "Fingerprint",
     leave: bool = True,
-):
+) -> pd.DataFrame | None:
     """Calculate fingerprints for molecules.
 
     Parameters
@@ -187,33 +201,18 @@ def get_fingerprints_selection(
     molecules: list[type[Mol]], bits: None | list[int] = None
 ) -> dict[str, pd.DataFrame]:
     """Calculate a selection of fingerprints."""
-    methods_bits = [
-        "rdkit",
-        "rdkit-count",
-        "morgan2",
-        "morgan2-count",
-        "morgan3",
-        "morgan3-count",
-        "topologicaltorsion",
-        "topologicaltorsion-count",
-        "atompair",
-        "atompair-count",
-        "avalon",
-    ]
     if bits is None:
         bits = [512, 1024, 2048, 4096]
 
-    methods_no_bits = ["erg", "maccs", "estate"]
-
     data_sets = {}
 
-    for method, bit in itertools.product(methods_bits, bits, desc="Bit sets"):
+    for method, bit in itertools.product(METHODS_BITS, bits, desc="Bit sets"):
         key = f"{method}-{bit}"
         data_sets[key] = get_fingerprints(
             molecules, method, bits=bit, description=key, leave=False
         )
 
-    for method in methods_no_bits:
+    for method in METHODS_NO_BITS:
         data_sets[method] = get_fingerprints(
             molecules, method, description=method, leave=True
         )
