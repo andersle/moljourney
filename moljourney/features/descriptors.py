@@ -181,6 +181,7 @@ def calculate_rdkit_functional_groups(
 def calculate_rdkit_descriptors(
     molecules: list[type[Mol]],
     disable_progress: bool = False,
+    count: bool = True,
     max_workers: int | None = None,
     chunksize: int = 1,
 ) -> pd.DataFrame:
@@ -190,7 +191,7 @@ def calculate_rdkit_descriptors(
         fgroups = calculate_rdkit_functional_groups(
             molecules,
             disable_progress=disable_progress,
-            count=True,
+            count=count,
             leave=False,
         )
         pbar.update(1)
