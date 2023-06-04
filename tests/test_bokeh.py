@@ -56,9 +56,6 @@ def test_get_size_mapping():
     )
     assert set(sizes) == {0.0, 1.0, 2.0, 3.0}
 
-    # print(test)
-    # print(sizes)
-
     # Test that we understand a mixture of text and numbers:
     test = ["frog", "cat", "dog", "apple", 1, "a", "b", "c", "d", "frog"]
     sizes = get_size_mapping(test, set_sizes=[2, 4, 6, 8])

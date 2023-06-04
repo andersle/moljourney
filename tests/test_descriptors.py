@@ -2,9 +2,9 @@ from moljourney.features.descriptors import (
     calculate_mordred_descriptors,
     calculate_rdkit_2d_descriptors,
     calculate_rdkit_3d_descriptors,
+    calculate_rdkit_descriptors,
     calculate_rdkit_fragments,
     calculate_rdkit_functional_groups,
-    calculate_rdkit_descriptors,
 )
 from moljourney.molecules import molecules_from_smiles
 
@@ -74,27 +74,37 @@ def test_rdkit_3d():
 
 def test_rdkit_fragments():
     """Test the fragment calculation."""
-    rdk = calculate_rdkit_fragments(MOLECULES, disable_progress=True, max_workers=1)
+    rdk = calculate_rdkit_fragments(
+        MOLECULES, disable_progress=True, max_workers=1
+    )
     assert rdk.shape == (6, 85)
     assert all(i.startswith("fr_") for i in rdk.columns)
 
 
 def test_rdkit_ifg():
     """Test the functional group identification."""
-    rdk = calculate_rdkit_functional_groups(MOLECULES, count=False, disable_progress=True)
+    rdk = calculate_rdkit_functional_groups(
+        MOLECULES, count=False, disable_progress=True
+    )
     assert rdk.shape == (6, 2)
     assert "CC(=O)O" in rdk
     assert "CO" in rdk
     assert max(rdk["CO"]) == 1
-    rdk = calculate_rdkit_functional_groups(MOLECULES, count=True, disable_progress=True)
+    rdk = calculate_rdkit_functional_groups(
+        MOLECULES, count=True, disable_progress=True
+    )
     assert max(rdk["CO"]) == 2
 
 
 def test_rdkit_descriptors_all():
     """Test that we can calculate all RDKit descriptors."""
-    rdk = calculate_rdkit_descriptors(MOLECULES, disable_progress=True, max_workers=1, count=False)
+    rdk = calculate_rdkit_descriptors(
+        MOLECULES, disable_progress=True, max_workers=1, count=False
+    )
     assert max(rdk["CO"]) == 1
     assert rdk.shape == (6, 220)
-    rdk = calculate_rdkit_descriptors(MOLECULES, disable_progress=True, max_workers=1, count=True)
+    rdk = calculate_rdkit_descriptors(
+        MOLECULES, disable_progress=True, max_workers=1, count=True
+    )
     assert max(rdk["CO"]) == 2
     assert rdk.shape == (6, 220)
