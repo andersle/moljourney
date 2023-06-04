@@ -21,17 +21,17 @@ from tqdm.contrib.concurrent import process_map
 LOGGER = logging.getLogger(__name__)
 
 METHODS_BITS = [
-        "rdkit",
-        "rdkit-count",
-        "morgan2",
-        "morgan2-count",
-        "morgan3",
-        "morgan3-count",
-        "topologicaltorsion",
-        "topologicaltorsion-count",
-        "atompair",
-        "atompair-count",
-        "avalon",
+    "rdkit",
+    "rdkit-count",
+    "morgan2",
+    "morgan2-count",
+    "morgan3",
+    "morgan3-count",
+    "topologicaltorsion",
+    "topologicaltorsion-count",
+    "atompair",
+    "atompair-count",
+    "avalon",
 ]
 METHODS_NO_BITS = ["erg", "maccs", "estate"]
 # Note: The methods below are mainly here so we can make use
