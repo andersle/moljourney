@@ -120,7 +120,7 @@ def preprocess_nan(
 
     If handle_nan is "remove", columns with NaNs are removed. If handle_nan
     is "remove-samples", rows with NaNs are removed.
-    
+
     The remove_threshold parameter is used to remove columns based
     on the fraction of NaNs in the column. This one is always "on",
     to avoid trying imputation for cases where there are too many
@@ -130,7 +130,7 @@ def preprocess_nan(
     "impute-median" or "impute-knn". This is probably not what you want,
     but it is included as a "quick" way to see the effect of imputation.
     Passing an object will use that object for imputation if
-    it has a method "fit_transform". 
+    it has a method "fit_transform".
 
     Parameters
     ----------
