@@ -5,14 +5,14 @@ from sklearn.impute import SimpleImputer
 
 from moljourney.preprocess import (
     count_nan,
+    preprocess,
+    preprocess_correlations,
+    preprocess_nan,
+    preprocess_variance,
     remove_all_nan_columns,
     remove_all_nan_rows,
     remove_nan_threshold,
     run_impute,
-    preprocess_nan,
-    preprocess_variance,
-    preprocess_correlations,
-    preprocess,
 )
 
 DATA = pd.DataFrame(
