@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.impute import KNNImputer, SimpleImputer
+from sklearn.impute._base import _BaseImputer
 
 LOGGER = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ def count_nan(dataframe: pd.DataFrame) -> pd.DataFrame:
 def run_impute(
     dataframe: pd.DataFrame,
     imputer_str: str = "",
-    imputer: type[SimpleImputer] | None = None,
+    imputer: _BaseImputer | None = None,
 ) -> pd.DataFrame:
     """Run imputation on numeric part of data frame.
 
@@ -56,7 +57,7 @@ def run_impute(
         if imputer is None:  # Unknown selection for impute-XXX
             raise ValueError(
                 f'Unknown imputer "{imputer_str}", expected one of: '
-                "{list(imputers.keys())}"
+                f"{list(imputers.keys())}"
             )
     numeric = dataframe.select_dtypes(include="number")
     non_numeric = dataframe.select_dtypes(exclude="number")
@@ -110,20 +111,26 @@ def remove_nan_threshold(
 
 def preprocess_nan(
     data: pd.DataFrame,
-    handle_nan: str | type[SimpleImputer] = "remove",
+    handle_nan: str | _BaseImputer = "remove",
     remove_threshold: float = 0.20,
     force_numeric: bool = False,
     include_inf: bool = True,
 ) -> pd.DataFrame:
     """Remove or impute NaNs.
 
-    If handle_nan is "remove", columns with NaNs are removed. Imputation
-    can be carried out by setting this string to "impute-mean",
+    If handle_nan is "remove", columns with NaNs are removed. If handle_nan
+    is "remove-samples", rows with NaNs are removed.
+    
+    The remove_threshold parameter is used to remove columns based
+    on the fraction of NaNs in the column. This one is always "on",
+    to avoid trying imputation for cases where there are too many
+    values missing (where "too many" is determined by remove_threshold).
+
+    Imputation can be carried out by setting this string to "impute-mean",
     "impute-median" or "impute-knn". This is probably not what you want,
     but it is included as a "quick" way to see the effect of imputation.
     Passing an object will use that object for imputation if
-    it has a method "fit_transform". The remove_threshold parameter
-    is used to remove columns based on the fraction of NaNs in the column.
+    it has a method "fit_transform". 
 
     Parameters
     ----------
@@ -207,7 +214,12 @@ def preprocess_nan(
 def preprocess_variance(
     data: pd.DataFrame, threshold: float = 0.0
 ) -> pd.DataFrame:
-    """Remove columns with low variance."""
+    """Remove columns with low variance.
+
+    Columns with a variance lower than the given threshold will be
+    removed.
+
+    """
     numeric = data.select_dtypes(include="number")
     columns_before = set(numeric.columns)
 
@@ -227,7 +239,12 @@ def preprocess_correlations(
     threshold: float = 1.0,
     method: str = "pearson",
 ) -> pd.DataFrame:
-    """Remove correlated columns."""
+    """Remove correlated columns.
+
+    Columns with a correlation higher than then given threshold will
+    be removed.
+
+    """
     numeric = data.select_dtypes(include="number")
 
     corr = numeric.corr(method=method).abs()
